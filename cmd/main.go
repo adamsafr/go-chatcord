@@ -4,13 +4,30 @@ import (
 	"fmt"
 	"github.com/adamsafr/go-chatcord/pkg/chat"
 	"github.com/googollee/go-socket.io"
+	"github.com/ilyakaznacheev/cleanenv"
 	"log"
 	"net/http"
 )
 
-const port = "5000"
+type Config struct {
+	ServerPort string `env:"SERVER_PORT"`
+}
+
+func loadEnvConfig() (*Config, error) {
+	var cfg Config
+
+	err := cleanenv.ReadConfig(".env", &cfg)
+
+	return &cfg, err
+}
 
 func main()  {
+	cfg, err := loadEnvConfig()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	server, err := socketio.NewServer(nil)
 
 	if err != nil {
@@ -25,6 +42,6 @@ func main()  {
 	http.Handle("/socket.io/", server)
 	http.Handle("/", http.FileServer(http.Dir("./web/static")))
 
-	log.Println(fmt.Sprintf("Serving at localhost:%s...", port))
-	log.Fatal(http.ListenAndServe(":" + port, nil))
+	log.Println(fmt.Sprintf("Serving at localhost:%s...", cfg.ServerPort))
+	log.Fatal(http.ListenAndServe(":" + cfg.ServerPort, nil))
 }
